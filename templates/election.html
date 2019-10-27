@@ -26,6 +26,9 @@
       </div>
     </div>
     <div>
+            {% if closed %}
+      <h4 class="d-flex justify-content-center bg-success">Contest is Ended</h4>
+      {% endif %}
       <div class="container">
         {% for row in grid %}
           <div class="row mb-3">
@@ -37,7 +40,9 @@
                   <div class="card-body">
                     <h5 class="card-title">{{ submission.costume_title}}</h5>
                     <p class="card-text">by {{ submission.contestant }}</p>
+                    {% if not closed %}
                     <a href="#" contestant_id = "{{ submission.id }}" class="btn btn-primary btnVote">Vote For Me</a>
+                    {% endif %}
                   </div>
                 </div>
               </div>
