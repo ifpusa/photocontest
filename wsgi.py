@@ -7,6 +7,7 @@ from flask import Flask, request, jsonify, render_template, flash, redirect
 from flask.views import MethodView
 from werkzeug.utils import secure_filename
 
+import sqlalchemy as sa
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.declarative import declarative_base
@@ -14,6 +15,8 @@ from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 
 from marshmallow import fields, post_load
 from marshmallow_sqlalchemy import ModelSchema
+
+from datetime import datetime
 
 # ┌─────────────────────────────────┐
 # │        Database Creation        │
@@ -106,7 +109,7 @@ class SubmissionListResource(MethodView):
 	def get(self):
 
 		schema = SubmissionSchema(many=True)
-		results = session.query(Submission).all()
+		results = session.query(Submission).order_by(Submission.contestant).all()
 
 		return jsonify(schema.dump(results))
 
@@ -127,10 +130,12 @@ class VoteResource(MethodView):
 
 		this_vote = Vote(voted_for=submission_id, created_at=datetime.now())
 		session.add(this_vote)
+
 		try:
 			session.commit()
 			return jsonify(message="success")
 		except:
+			session.close()
 			return jsonify(message="failure")
 
 
