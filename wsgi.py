@@ -143,7 +143,6 @@ class VoteResource(MethodView):
 def create_submission():
 	'''Taken straight from Flask docs'''
 
-	breakpoint()
 	if request.method == 'POST':
 			# check if the post request has the file part
 			if 'file' not in request.files:
