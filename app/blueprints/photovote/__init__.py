@@ -4,7 +4,16 @@ from io import BytesIO
 
 import pandas as pd
 import sqlalchemy as sa
-from flask import Flask, flash, g, jsonify, redirect, render_template, request
+from flask import (
+    Blueprint,
+    flash,
+    g,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    current_app,
+)
 from flask.views import MethodView
 from marshmallow import fields, post_load
 from marshmallow_sqlalchemy import ModelSchema
@@ -27,7 +36,7 @@ from werkzeug.utils import secure_filename
 # │        ORM Mapping stuff        │
 # └─────────────────────────────────┘
 
-engine = create_engine("sqlite:///halloween.db", echo=True)
+engine = create_engine(f"sqlite:///halloween.db", echo=True)
 Session = sessionmaker(bind=engine)
 
 Base = declarative_base()
@@ -41,7 +50,7 @@ class Submission(Base):
     contestant = Column(String)
     costume_title = Column(String)
     photo_path = Column(String)
-    votes = relationship("Vote")
+    votes = relationship("Vote", cascade="all, delete, delete-orphan")
 
 
 class Vote(Base):
@@ -96,6 +105,7 @@ class SubmissionResource(MethodView):
 
     def delete(self, submission_id):
 
+        
         this_submission = g.session.query(Submission).filter_by(id=submission_id).one()
 
         try:
@@ -146,16 +156,17 @@ class VoteResource(MethodView):
 # └─────────────────────────────────┘
 
 
-class PageSubmitAContestant(MethodView):
+class AdminPageView(MethodView):
     def get(self):
 
         t = sa.text(
-            "select b.contestant, count(*) votes \
-            FROM votes a \
-            JOIN submissions b on a.voted_for = b.id \
-            group by b.contestant order by count(*) desc"
+            "select a.id, a.contestant, count(b.id) votes \
+FROM submissions a LEFT JOIN votes b on a.id = b.voted_for \
+GROUP BY a.id, a.contestant ORDER BY count(b.id) DESC"
         )
         df = pd.read_sql(t, engine)
+
+
 
         return render_template("index.html", standings=df)
 
@@ -174,12 +185,12 @@ class PageSubmitAContestant(MethodView):
             return redirect(request.url)
         if file and self.allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+            file.save(os.path.join(ABS_UPLOAD_FOLDER, filename))
 
         this_submission = Submission()
         this_submission.contestant = request.form["contestant"]
         this_submission.costume_title = request.form["costume_title"]
-        this_submission.photo_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+        this_submission.photo_path = os.path.join(UPLOAD_FOLDER, filename)
 
         g.session.add(this_submission)
         g.session.commit()
@@ -195,7 +206,7 @@ class PageSubmitAContestant(MethodView):
 
 def election_page():
 
-    if datetime.now() > app.config["CONTEST_FINISH_TIME"]:
+    if datetime.now() > CONTEST_FINISH_TIME:
         closed = True
     else:
         closed = False
@@ -210,20 +221,8 @@ def election_page():
     else:
         row_count = (submission_count // 3) + 1
 
-    grid = []
-
-    for rownum in range(row_count):
-
-        l = []
-        if rownum + 1 == row_count:
-            row_width = submission_count % 3
-        else:
-            row_width = 3
-
-        for i in range(row_width):
-            l.append(submissions[rownum * 3 + i - 1])
-
-        grid.append(l)
+    # split the list of grids into groups of three
+    grid = [submissions[i : i + 3] for i in range(0, len(submissions), 3)]
 
     return render_template("election.html", grid=grid, closed=closed)
 
@@ -239,38 +238,38 @@ def election_page():
 Base.metadata.create_all(engine, checkfirst=True)
 
 
+bp = Blueprint(
+    "photovote", __name__, static_folder="static", template_folder="templates"
+)
+
 UPLOAD_FOLDER = "static/pics"
+ABS_UPLOAD_FOLDER = os.path.join(*[bp.static_folder, "pics"])
 ALLOWED_EXTENSIONS = {"jpg"}
 CONTEST_FINISH_TIME = datetime.strptime("2019-10-31 14:00", "%Y-%m-%d %H:%M")
 
-app = Flask(__name__)
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-app.config["SECRET_KEY"] = "BOO"
-app.config["CONTEST_FINISH_TIME"] = CONTEST_FINISH_TIME
+SECRET_KEY = "BOO"
+CONTEST_FINISH_TIME = CONTEST_FINISH_TIME
 
 
-@app.before_request
+@bp.before_request
 def before_request():
     g.session = Session()
 
 
-@app.after_request
+@bp.after_request
 def after_request(resp):
+
     g.session.close()
     return resp
 
 
-app.add_url_rule("/", endpoint="index", view_func=election_page)
-app.add_url_rule(
-    "/admin",
-    endpoint="admin",
-    view_func=PageSubmitAContestant.as_view("make_a_submission"),
+bp.add_url_rule("/", endpoint="index", view_func=election_page)
+bp.add_url_rule(
+    "/admin", endpoint="admin", view_func=AdminPageView.as_view("make_a_submission")
 )
 
-app.add_url_rule(
-    "/submissions", view_func=SubmissionListResource.as_view("submissions")
-)
-app.add_url_rule(
+bp.add_url_rule("/submissions", view_func=SubmissionListResource.as_view("submissions"))
+bp.add_url_rule(
     "/submissions/<submission_id>", view_func=SubmissionResource.as_view("submission")
 )
-app.add_url_rule("/vote/<submission_id>", view_func=VoteResource.as_view("votes"))
+bp.add_url_rule("/vote/<submission_id>", view_func=VoteResource.as_view("votes"))
