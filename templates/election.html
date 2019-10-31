@@ -72,6 +72,8 @@
         $.post(url,function (result) {
           alert('Thanks for Voting!');
           $("a.btnVote").addClass("disabled");
+
+          setTimeout(function () { location.reload()}, 5000)
         })
     })
     </script>
