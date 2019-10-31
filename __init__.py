@@ -36,7 +36,15 @@ from werkzeug.utils import secure_filename
 # │        ORM Mapping stuff        │
 # └─────────────────────────────────┘
 
-engine = create_engine(f"sqlite:///halloween.db", echo=True)
+
+db_location = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'contest.db')
+
+pics_directory = os.path.join(os.path.dirname(os.path.realpath(__file__)),'static', 'pics')
+if not os.path.exists(pics_directory):
+    os.makedirs(pics_directory)
+
+
+engine = create_engine(f"sqlite:///{db_location}", echo=True)
 Session = sessionmaker(bind=engine)
 
 Base = declarative_base()
@@ -245,7 +253,7 @@ bp = Blueprint(
 UPLOAD_FOLDER = "static/pics"
 ABS_UPLOAD_FOLDER = os.path.join(*[bp.static_folder, "pics"])
 ALLOWED_EXTENSIONS = {"jpg"}
-CONTEST_FINISH_TIME = datetime.strptime("2019-10-31 14:00", "%Y-%m-%d %H:%M")
+CONTEST_FINISH_TIME = datetime.strptime("2019-10-31 11:00", "%Y-%m-%d %H:%M")
 
 SECRET_KEY = "BOO"
 CONTEST_FINISH_TIME = CONTEST_FINISH_TIME
