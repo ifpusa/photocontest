@@ -8,8 +8,8 @@
     <link rel="manifest" href="site.webmanifest">
     <link rel="apple-touch-icon" href="icon.png">
     <!-- Place favicon.ico in the root directory -->
-    <link rel="stylesheet" href="/static/css/normalize.css">
-    <link rel="stylesheet" href="/static/css/main.css">
+    <link rel="stylesheet" href="/contest/static/css/normalize.css">
+    <link rel="stylesheet" href="/contest/static/css/main.css">
     <meta name="theme-color" content="#fafafa">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
     <style>
@@ -22,7 +22,7 @@
       
       <div class="jumbotron">
         <h1 class="display-4">IFP 2019 Halloween Photo Contest</h1>
-        <p class="lead">Vote for your favorite below. Contest ends at 2pm!</p>
+        <p class="lead">Vote for your favorite below. Contest ends at 11am!</p>
       </div>
     </div>
     <div>
@@ -54,13 +54,13 @@
       </div>
     </div>
     
-    <script src="/static/js/vendor/modernizr-3.7.1.min.js"></script>
+    <script src="/contest/static/js/vendor/modernizr-3.7.1.min.js"></script>
     <script
     src="https://code.jquery.com/jquery-3.4.1.min.js"
     integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
     crossorigin="anonymous"></script>
-    <script src="/static/js/plugins.js"></script>
-    <script src="/static/js/main.js"></script>
+    <script src="/contest/static/js/plugins.js"></script>
+    <script src="/contest/static/js/main.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
     <script>
 
@@ -68,7 +68,7 @@
     $(".btnVote").click(function( event ) {
         event.preventDefault();
         console.log($(this).attr('contestant_id'));
-        var url = '/vote/' + $(this).attr('contestant_id');
+        var url = '/contest/vote/' + $(this).attr('contestant_id');
         $.post(url,function (result) {
           alert('Thanks for Voting!');
           $("a.btnVote").addClass("disabled");

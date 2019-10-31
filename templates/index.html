@@ -18,6 +18,49 @@
 
 
 	<h3>Current Standings</h3>
-	{{ standings.to_html(index=False) | safe }}
+
+		<table>
+		<thead>
+			<th>Contestant</th>
+			<th>Number of Votes</th>
+			<th>Action</th>
+		</thead>
+		<tbody>
+			{% for row in standings.itertuples() %}
+			<tr>
+				<td>{{ row.contestant}}</td>
+				<td>{{ row.votes }}</td>
+				<td><input type="submit" contestant_id="{{ row.id }}" class='btnDelete' value="Delete" /></td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+
+
+	<script
+    src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+    crossorigin="anonymous"></script>
+
+
+	<script>
+
+		$(".btnDelete").click(function( event ) {
+        event.preventDefault();
+        console.log($(this).attr('contestant_id'));
+        var url = '/contest/submissions/' + $(this).attr('contestant_id');
+
+
+        $.ajax(url,
+        {
+        	type: 'DELETE'
+        }
+        ).done(alert('Submission deleted'))
+
+			location.reload()
+        })
+
+
+	</script>
 </body>
 </html>
